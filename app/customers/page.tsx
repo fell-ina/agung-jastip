@@ -24,13 +24,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fetchCustomers, fetchOrders, deleteCustomer } from "@/lib/api";
+import {
+  fetchCustomersAction,
+  fetchOrdersAction,
+  deleteCustomerAction,
+} from "../actions/customers";
 import { formatDate, normalizePhone } from "@/lib/format";
 import type { Customer } from "@/lib/types";
 import { useLoad } from "@/hooks/use-load";
 
 async function loadCustomersPage() {
-  const [customers, orders] = await Promise.all([fetchCustomers(), fetchOrders()]);
+  const [customers, orders] = await Promise.all([
+    fetchCustomersAction(),
+    fetchOrdersAction(),
+  ]);
   return { customers, orders };
 }
 
@@ -42,13 +49,13 @@ export default function CustomersPage() {
 
   const orderCounts = useMemo(() => {
     const map = new Map<string, number>();
-    data?.orders.forEach((o) => {
+    data?.orders.forEach((o: { customer_id: string }) => {
       map.set(o.customer_id, (map.get(o.customer_id) ?? 0) + 1);
     });
     return map;
   }, [data]);
 
-  const deleteCustomerRow = deleteId ? data?.customers.find((c) => c.id === deleteId) : null;
+  const deleteCustomerRow = deleteId ? data?.customers.find((c: Customer) => c.id === deleteId) : null;
 
   return (
     <div>
@@ -102,7 +109,7 @@ export default function CustomersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.customers.map((customer) => (
+              {data.customers.map((customer: Customer) => (
                 <TableRow key={customer.id}>
                   <TableCell className="font-medium">{customer.name}</TableCell>
                   <TableCell>
@@ -193,7 +200,7 @@ export default function CustomersPage() {
         onConfirm={async () => {
           if (!deleteId) return;
           try {
-            await deleteCustomer(deleteId);
+            await deleteCustomerAction(deleteId);
             toast.success("Customer dihapus");
             setDeleteId(null);
             reload();
